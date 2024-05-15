@@ -63,7 +63,7 @@ const response = client.simpleChat("こんにちは!");
 
 
 JSONスキーマは、受け取りたいJSONっぽい雰囲気のものを書いて、以下のようにChatGPTにJSONスキーマにしてもらえばOK。  
-＜ここに画像＞
+<img src="">
 
 # AIの前提知識を関数呼び出しで補完する例
 ```JavaScript
