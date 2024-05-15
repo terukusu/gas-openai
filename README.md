@@ -20,10 +20,17 @@
 
 # シンプルなコードの例
 ```JavaScript
+//OpenAIの場合
+const client = OpenAI.createOpenAIClient({
+  apiKey: '<YOUR_API_KEY>'
+});
+
+// Azure の場合
 const client = OpenAI.createAzureOpenAIClient({
   apiKey: '<YOUR_API_KEY>',
   azureEndpoint: '<AZURE_ENDPOINT>',
 });
+
 const response = client.simpleChat("こんにちは!");
 ```
 
