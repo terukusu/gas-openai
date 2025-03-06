@@ -234,7 +234,9 @@ class BaseOpenAI {
 
         payload.messages[0].content.push({
           'type': 'image_url',
-          'image_url': dataUriScheme
+          'image_url': {
+            'url': dataUriScheme
+          }
         });
       });
     }
