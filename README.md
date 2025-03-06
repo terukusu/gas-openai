@@ -153,3 +153,14 @@ JSONスキーマは、受け取りたいJSONっぽい雰囲気のものを書い
   // 出力例：
   // みなさんお集まりいただきありがとうございます 本日は当プロジェクトの大型アップデートについて話し合いましょう
 ```
+
+# エンベディング（文字列のベクトル表現化）をする例
+```JavaScript
+  // ==== エンベディング（ベクトル化）の例 ====
+  params = {
+    model: "text-embedding-3-small", // embeddingsを使うときはこのモデルを指定。text-embedding-3-large でも良いよ。
+  };
+
+  result = client.simpleEmbedding(["わーい"], params);
+  Logger.log(result);
+```
