@@ -1,7 +1,7 @@
 // LLM関連のパラメータのデフォルト値
-const _DEFAULT_MODEL = "gpt-4"
+const _DEFAULT_MODEL = "gpt-4o"
 const _DEFAULT_API_VERSION = "2024-02-15-preview" // Azure用
-const _DEFAULT_MAX_TOKENS = 2000;
+const _DEFAULT_MAX_TOKENS = 10000;
 const _DEFAULT_TEMPERATURE = 0.6;
 const _DEFAULT_MAX_RETRY = 5;
 const _DEFAULT_MAX_RETRY_FOR_FORMAT_AI_MESSAGE = 5;
@@ -354,10 +354,10 @@ class BaseOpenAI {
    *
    * 本家OpenAI
    * https://platform.openai.com/docs/api-reference/images/create
-   * 
+   *
    * Azure
    * https://learn.microsoft.com/ja-jp/azure/ai-services/openai/reference#request-a-generated-image-dall-e-3
-   * 
+   *
    * @param {string} prompt - プロンプト
    * @param {Object} [params] - 生成オプションを含む設定オブジェクト。
    * @param {string} [params.model] - 使用するモデルの識別子。
@@ -379,6 +379,60 @@ class BaseOpenAI {
     };
 
     const url = this.getImageGenerationUrl_(params);
+
+    return this.callApi_(url, payload, params.maxRetry);
+  }
+
+  /**
+   * テキストのEmbedding（ベクトル表現）を取得します。
+   * シンプルな結果だけを返します。
+   *
+   * @param {string|string[]} input - Embeddingを生成するためのテキスト（文字列または文字列の配列）
+   * @param {Object} [params] - 生成オプションを含む設定オブジェクト
+   * @param {string} [params.model] - 使用するモデルの識別子（例: "text-embedding-3-small"）
+   * @param {string} [params.encoding_format] - エンコーディング形式（"float"または"base64"）
+   * @return {number[]|number[][]} 入力テキストごとのEmbedding（単一文字列の場合は単一配列、文字列配列の場合は配列の配列）
+   * @throws {Error} OpenAI APIレイヤでのエラーが発生した場合に例外をスローします。
+   */
+  simpleEmbedding(input, params={}) {
+    const result = this.createEmbedding(input, params);
+    if (result.error) {
+      throw new Error("API エラー: " + JSON.stringify(result.error));
+    }
+
+    // 入力が単一文字列の場合は単一配列、文字列配列の場合は配列の配列を返す
+    if (Array.isArray(input)) {
+      // 配列の各要素に対応するembeddingを結果の順序通りに取得
+      return result.data.map(item => item.embedding);
+    } else {
+      // 単一文字列の場合は最初のembeddingのみを返す
+      return result.data[0].embedding;
+    }
+  }
+
+  /**
+   * テキストのEmbedding（ベクトル表現）を取得します。
+   * APIからのレスポンス全体を返します。
+   *
+   * @param {string|string[]} input - Embeddingを生成するためのテキスト（文字列または文字列の配列）
+   * @param {Object} [params] - 生成オプションを含む設定オブジェクト
+   * @param {string} [params.model] - 使用するモデルの識別子（例: "text-embedding-3-small"）
+   * @param {string} [params.encoding_format] - エンコーディング形式（"float"または"base64"）
+   * @param {number} [params.maxRetry] - 最大リトライ回数
+   * @return {Object} OpenAI APIからのレスポンス全体（embedding, usage情報などを含む）
+   * @throws {Error} OpenAI APIレイヤでのエラーが発生した場合に例外をスローします。
+   */
+  createEmbedding(input, params={}) {
+    const payload = {
+      model: params.model || this.model,
+      input: input
+    };
+
+    if (params.encoding_format) {
+      payload.encoding_format = params.encoding_format;
+    }
+
+    const url = this.getEmbeddingUrl_(params);
 
     return this.callApi_(url, payload, params.maxRetry);
   }
@@ -461,7 +515,7 @@ class BaseOpenAI {
       } catch (e) {
         const message = e.toString();
         Logger.log(message);
-        if (attempts >= 2 || response.getResponseCode() !== 429) {
+        if (attempts >= 2 || (response != null && response.getResponseCode() !== 429)) {
           throw new Error(message);
         }
       }
@@ -502,11 +556,14 @@ class BaseOpenAI {
   // 抽象メソッド
   getAudioTranscriptionUrl_(params={}) {}
 
-  // 抽象メソッドオーバーライド
+  // 抽象メソッド
   getImageGenerationUrl_(params={}) {}
 
   // 抽象メソッド
-  getAuthorizationHeader_(){}
+  getEmbeddingUrl_(params={}) {}
+
+  // 抽象メソッド
+  getAuthorizationHeader_() {}
 }
 
 /**
@@ -560,6 +617,12 @@ class AzureOpenAI extends BaseOpenAI {
   }
 
   // 抽象メソッドオーバーライド
+  getEmbeddingUrl_(params={}) {
+    const url = this.azureEndpoint + "/openai/deployments/" + (params.model || this.model) + "/embeddings?api-version=" + this.apiVersion;
+    return url;
+  }
+
+  // 抽象メソッドオーバーライド
   getAuthorizationHeader_(){
     return {"api-key": this.apiKey}
   }
@@ -595,6 +658,11 @@ class OpenAI extends BaseOpenAI {
   getImageGenerationUrl_(params={}) {
     const url = "https://api.openai.com/v1/images/generations";
     return url;
+  }
+
+  // 抽象メソッドオーバーライド
+  getEmbeddingUrl_(params={}) {
+    return "https://api.openai.com/v1/embeddings";
   }
 
   // 抽象メソッドオーバーラド
