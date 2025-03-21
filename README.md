@@ -165,4 +165,16 @@ JSONスキーマは、受け取りたいJSONっぽい雰囲気のものを書い
 
   result = client.simpleEmbedding(["わーい"], params);
   Logger.log(result);
+  // 出力例；
+  // {
+  //   "object": "list",
+  //   "data": [
+  //     {
+  //       "object": "embedding",
+  //       "index": 0,
+  //       "embedding": [
+  //         0.002589861,
+  //         0.013294913,
+  //         -0.079392985,
+  //         ⋮
 ```
