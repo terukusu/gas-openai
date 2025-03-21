@@ -115,7 +115,7 @@ JSONスキーマは、受け取りたいJSONっぽい雰囲気のものを書い
   const myPng  = DriveApp.getFileById("1KRr_7CdjYklHwSvL7EfRfp0EiStgxTIq");
 
   params = {
-    model: "gpt-4-vision-preview", // 画像を使うときはこのモデルを指定
+    model: "gpt-4o", // 画像が使えるモデルを選ぶ
     images:[myPng.getBlob()]
   };
 
@@ -146,8 +146,8 @@ JSONスキーマは、受け取りたいJSONっぽい雰囲気のものを書い
   const myVoice  = DriveApp.getFileById("1nPivg4JwHhrE4Qax1du2CM2P5uIIY9Py");
 
   params = {
-    model: "whisper" // Azure の whisper
-    // model: "whisper-1" // 本家 OpenAI の whisper
+    // model: "whisper" // Azure の whisper
+    model: "whisper-1" // 本家 OpenAI の whisper
   };
 
   result = client.simpleVoiceToText(myVoice.getBlob(), params);
