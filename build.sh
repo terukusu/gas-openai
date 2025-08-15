@@ -19,13 +19,34 @@ print_usage_exit () {
 
 function dl_from_server() {
    local script_id=$(cat $CDIR/.clasp.json | grep scriptId | cut -d'"' -f 4)
+   local clasp_backup=""
+   
+   # .clasp.jsonの一時退避（親フォルダの競合回避）
+   if [ -f "$CDIR/.clasp.json" ]; then
+       clasp_backup="$CDIR/.clasp.json.backup.$$"
+       mv "$CDIR/.clasp.json" "$clasp_backup"
+   fi
+   
+   # tmpディレクトリのクリーンアップ
    if [ -d "$TMP_DIR" ]; then
        rm -rf "$TMP_DIR"
    fi
-
    mkdir "$TMP_DIR"
 
-   clasp clone --rootDir "$TMP_DIR" $script_id
+   # clasp cloneの実行（エラーハンドリング付き）
+   local clone_result=0
+   clasp clone --rootDir "$TMP_DIR" $script_id || clone_result=$?
+   
+   # .clasp.jsonの復帰（成功・失敗問わず必ず実行）
+   if [ -n "$clasp_backup" ] && [ -f "$clasp_backup" ]; then
+       mv "$clasp_backup" "$CDIR/.clasp.json"
+   fi
+   
+   # cloneが失敗した場合はエラー終了
+   if [ $clone_result -ne 0 ]; then
+       echo "Error: clasp clone failed with exit code $clone_result"
+       return $clone_result
+   fi
 }
 
 ENTRY_POINT="$SRC_DIR"/main.js
